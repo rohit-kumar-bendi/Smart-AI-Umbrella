@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Smart AI Umbrella</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<h1 class="title">🌾 Smart AI Umbrella</h1>
+
+
+{% if alerts %}
+<div class="alerts">
+{% for alert in alerts %}
+<div class="alert-box">⚠ {{ alert }}</div>
+{% endfor %}
+</div>
+{% endif %}
+
+
+
+<div class="grid">
+
+<!-- MODE -->
+
+<div class="card">
+<h2>Mode</h2>
+<p class="value">{{ mode }}</p>
+</div>
+
+
+
+
+<!-- TEMPERATURE -->
+
+<div class="card">
+<h2>Temperature</h2>
+<p class="value">{{ temperature }} °C</p>
+</div>
+
+
+
+<!-- RAIN -->
+
+<div class="card">
+<h2>Rain</h2>
+
+{% if rain %}
+<div class="indicator red"></div>
+<p class="value">RAIN</p>
+{% else %}
+<div class="indicator green"></div>
+<p class="value">NO RAIN</p>
+{% endif %}
+
+</div>
+
+
+
+<!-- SOIL -->
+
+<div class="card">
+<h2>Soil</h2>
+
+{% if soil == "DRY" %}
+<span class="badge dry">DRY</span>
+{% else %}
+<span class="badge moist">MOIST</span>
+{% endif %}
+
+</div>
+
+
+
+<!-- CROP SAFETY -->
+
+<div class="card">
+<h2>Crop Safety</h2>
+<p class="score">{{ score }}%</p>
+</div>
+
+
+
+<!-- DECISION ENGINE -->
+
+<div class="card decision-card">
+
+<h2>☂ Decision Engine</h2>
+
+<p class="value action-text">
+{{ umbrella }}
+</p>
+
+<p class="decision">
+
+{{ decision_message if decision_message else "Waiting for sensor update..." }}
+
+</p>
+
+</div>
+
+
+
+<!-- SYSTEM INFO -->
+
+<div class="card">
+<h2>System Info</h2>
+
+<p>Uptime: {{ uptime }} sec</p>
+<p>Data Logs: {{ log_count }}</p>
+
+<p id="clock"></p>
+
+</div>
+
+
+
+<!-- SYSTEM STATUS -->
+
+<div class="card status-panel">
+
+<h2>System Status</h2>
+
+<div class="status-grid">
+
+<div class="status-item">
+<div class="indicator yellow"></div>
+<span>Temperature Sensor</span>
+<span class="status-text">{{ system_status.temperature_sensor }}</span>
+</div>
+
+<div class="status-item">
+<div class="indicator yellow"></div>
+<span>Rain Sensor</span>
+<span class="status-text">{{ system_status.rain_sensor }}</span>
+</div>
+
+<div class="status-item">
+<div class="indicator yellow"></div>
+<span>Soil Sensor</span>
+<span class="status-text">{{ system_status.soil_sensor }}</span>
+</div>
+
+<div class="status-item">
+<div class="indicator blue"></div>
+<span>Motor Controller</span>
+<span class="status-text">{{ system_status.motor_controller }}</span>
+</div>
+
+<div class="status-item">
+<div class="indicator green"></div>
+<span>Decision Engine</span>
+<span class="status-text">{{ system_status.decision_engine }}</span>
+</div>
+
+<div class="status-item">
+<div class="indicator green"></div>
+<span>Dashboard</span>
+<span class="status-text">{{ system_status.dashboard }}</span>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- CONTROLS -->
+
+<div class="controls">
+
+<h2>System Control</h2>
+
+<a href="/auto"><button class="btn">AUTO</button></a>
+<a href="/manual"><button class="btn">MANUAL</button></a>
+
+{% if mode == "MANUAL" %}
+<a href="/open"><button class="btn">OPEN</button></a>
+<a href="/close"><button class="btn">CLOSE</button></a>
+{% endif %}
+
+</div>
+
+
+
+<!-- CONFIGURATION -->
+
+<div class="config">
+
+<h2>Configuration</h2>
+
+<form action="/update_config" method="POST">
+
+<label>Temperature Threshold</label>
+
+<input type="number" name="temp_threshold" value="{{ temp_threshold }}">
+
+
+<label>Soil Mode</label>
+
+<select name="soil_mode">
+
+<option value="DRY" {% if soil_mode=="DRY" %}selected{% endif %}>DRY</option>
+<option value="MOIST" {% if soil_mode=="MOIST" %}selected{% endif %}>MOIST</option>
+
+</select>
+
+<button class="save">Save Configuration</button>
+
+</form>
+
+</div>
+
+
+
+<!-- SENSOR ANALYTICS -->
+
+<h2 class="chart-title">Sensor Analytics</h2>
+
+<div class="chart-buttons">
+
+<button onclick="setSensor('temperature')">Temperature</button>
+<button onclick="setSensor('soil')">Soil</button>
+<button onclick="setSensor('rain')">Rain</button>
+
+</div>
+
+<canvas id="sensorChart"></canvas>
+
+
+
+<script>
+
+const ctx = document.getElementById('sensorChart').getContext('2d');
+
+let currentSensor = "temperature";
+
+let chart = new Chart(ctx,{
+type:'line',
+data:{
+labels:[],
+datasets:[{
+label:'Sensor Data',
+data:[],
+borderColor:'#2e7d32',
+fill:false
+}]
+}
+});
+
+
+function loadSensor(){
+
+fetch('/sensor-data/'+currentSensor)
+.then(res=>res.json())
+.then(data=>{
+
+chart.data.labels=data.map((_,i)=>i);
+chart.data.datasets[0].data=data;
+
+chart.update();
+
+});
+
+}
+
+
+function setSensor(sensor){
+
+currentSensor = sensor;
+
+loadSensor();
+
+}
+
+
+setInterval(loadSensor,5000);
+
+loadSensor();
+
+
+
+function updateClock(){
+
+const now = new Date();
+
+document.getElementById("clock").innerHTML =
+"Time: " + now.toLocaleTimeString();
+
+}
+
+setInterval(updateClock,1000);
+
+updateClock();
+
+</script>
+
+</body>
+</html>

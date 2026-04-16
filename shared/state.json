@@ -1,0 +1,16 @@
+{
+    "mode": "MANUAL",
+    "manual_command": "OPEN",
+    "temperature": 32.08,
+    "rain": false,
+    "soil": "DRY",
+    "umbrella": "OPEN",
+    "config": {
+        "temp_threshold": 30,
+        "soil_mode": "DRY",
+        "light_mode": "HIGH"
+    },
+    "light": "LOW",
+    "decision_message": "Manual mode active",
+    "umbrella_action": "User controlled"
+}
